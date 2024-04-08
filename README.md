@@ -11,9 +11,11 @@
 <h2>📌使用前阅读</h2>
 
 <p>脚本支持3种下载方式：IDM和Aria2/Motrix</p>
-<p>IDM下载：注意IDM必须设置4线程及修改UA为“netdisk;7.2.6.2;PC”，设置教程：>>> 点击查看IDM设置 <<<</p>
-<p>Aria2下载：Aria2无需配置即可使用：>>> 点击下载Aria2 <<<</p>
-<p>Motrix下载：Motrix无需配置即可使用：>>> 点击下载Motrix<<<</p>
+<p>IDM下载：注意IDM必须修改UA为“netdisk;7.2.6.2;PC”，>>> <a href="https://www.123pan.com/s/Ui7DVv-QuDHA.html" rel="nofollow">点击下载IDM</a> <<<</p>
+<p>Aria2下载：Aria2无需配置即可使用：>>> <a href="https://www.123pan.com/s/Ui7DVv-QyNHA.html" rel="nofollow">点击下载Aria2</a> <<<</p>
+<p>Motrix下载：Motrix无需配置即可使用：>>> <a href="https://www.123pan.com/s/Ui7DVv-9uDHA.html" rel="nofollow">点击下载Motrix</a><<<</p>
+
+
 
 <p>详细使用步骤，请参考教程： >>> 点击查看使用教程 <<<</p>
 
