@@ -43,7 +43,7 @@
 </tbody></table>
 
 <h3>反馈问题请加电报群：</h3>
-<p>https://t.me/+dxxAFTo4bNI0ZGE9</p>
+<p>暂无</p>
 
 <h2>致谢：</h2>
 
