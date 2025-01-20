@@ -2,6 +2,8 @@
 // @name         百度网盘直连助手🚀-ED4m
 // @namespace    https://github.com/gited4m/paned4m
 // @description  一个百度网盘直链获取助手,支持IDM、Aria2、Motrix加速下载。适配 Chrome✔，Edge✔，FireFox✔官方浏览器 长期维护，放心食用
+// @homepage     http://ass.baidassets.cn
+// @supportURL   http://ass.baidassets.cn
 // @version      v0.2
 // @antifeature  membership
 // @antifeature  ads
