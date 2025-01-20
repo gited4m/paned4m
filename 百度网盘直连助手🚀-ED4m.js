@@ -2,7 +2,7 @@
 // @name         百度网盘直连助手🚀-ED4m
 // @namespace    https://github.com/gited4m/paned4m
 // @description  一个百度网盘直链获取助手,支持IDM、Aria2、Motrix加速下载。适配 Chrome✔，Edge✔，FireFox✔官方浏览器 长期维护，放心食用
-// @version      v0.1
+// @version      v0.2
 // @antifeature  membership
 // @antifeature  ads
 // @antifeature  tracking
@@ -27,10 +27,28 @@
 // @connect      gitee.com
 // @connect      127.0.0.1
 // @connect      baidu.com
-// @connect      ed4m.blog
+// @connect      v2.ed4m.blog
+// @connect      pro.baidassets.cn
 // ==/UserScript==
 
 
+const proUrl = 'https://pro.baidassets.cn';
+const commonUrl = 'https://v2.ed4m.blog';
+
+function getPassword(){
+    return localStorage.password ?? null;
+}
+
+function getServersUrl(){
+
+    const password = getPassword();
+
+    if(!password || password.length <= 4){
+        return commonUrl;
+    }
+
+    return proUrl;
+}
 
 const ccudhtyfgrbf = (str, len, suffix) => {
     if (!suffix) suffix = "...";
@@ -56,14 +74,6 @@ const ccudhtyfgrbf = (str, len, suffix) => {
     return str;
 };
 
-const saveStart = (res) => {
-    let start = info.getCommonValue('start');
-    if (start) {
-        return false
-    };
-    start = new Date().getTime();
-    info.setCommonValue('start', start);
-};
 
 const rridnchfd = (len22) => {
     len22 = len22 || 4;
@@ -80,20 +90,20 @@ const rridnchfd = (len22) => {
 
 (function () {
 
-       const isOldHomePageA = () => {
-           const url = location.href;
-           return url.indexOf(".baidu.com/disk/home") > 0;
-       };
+    const isOldHomePageA = () => {
+        const url = location.href;
+        return url.indexOf(".baidu.com/disk/home") > 0;
+    };
 
-        const isNewHomePageB = () => {
-            const url = location.href;
-            return url.indexOf(".baidu.com/disk/main") > 0;
-        };
+    const isNewHomePageB = () => {
+        const url = location.href;
+        return url.indexOf(".baidu.com/disk/main") > 0;
+    };
 
-        const isSharePageC = () => {
-            const path = location.pathname.replace('/disk/', '');
-            return /^\/(s|share)\//.test(path);
-        };
+    const isSharePageC = () => {
+        const path = location.pathname.replace('/disk/', '');
+        return /^\/(s|share)\//.test(path);
+    };
 
 
     if (window !== window.top) {
@@ -101,13 +111,70 @@ const rridnchfd = (len22) => {
 
     }
 
+    const globalDataConfig = {
+        domain: '',
+        downloading: 0,
+        domainB: '',
+        param: '',
+        scriptVersion: '2.1.0',
+        storageNamePrefix: 'ConfigName',
+        sending: 0,
+    };
+
+    const getAppSettingData = () => ({
+        scriptVersion: globalDataConfig.scriptVersion,
+        param: globalDataConfig.param,
+        storageNamePrefix: globalDataConfig.storageNamePrefix,
+        getDLUrl: `/bd/api.php`,
+    });
+
+    const tmpData = {
+        response: '',
+        pwd: '',
+        fs_id: '',
+        token: '',
+    };
+
+
+    const info = {
+        getCommonValue: key => GM_getValue(`${getAppSettingData().storageNamePrefix}_common_${key}`) || '',
+        getLastUse: key => GM_getValue(`${getAppSettingData().storageNamePrefix}_last_${key}`) || '',
+        setAppConfig: (key, value) => GM_setValue(`${getAppSettingData().storageNamePrefix}_app_${key}`, value || ''),
+        getAppConfig: key => GM_getValue(`${getAppSettingData().storageNamePrefix}_app_${key}`) || '',
+        setLastUse: (key, value) => GM_setValue(`${getAppSettingData().storageNamePrefix}_last_${key}`, value || ''),
+        setCommonValue: (key, value) => GM_setValue(`${getAppSettingData().storageNamePrefix}_common_${key}`, value || '')
+    };
+
+    const configDefault = {
+        savePath: 'D:\\ED4M',
+        jsonRpc: 'http://localhost:6800/jsonrpc',
+        token: '',
+        mine: '',
+        code: '',
+    };
+
+
+    const getSSConfig = () => ({
+        savePath: info.getLastUse('savePath') || info.getAppConfig('savePath') || configDefault.savePath,
+        jsonRpc: info.getLastUse('jsonRpc') || info.getAppConfig('jsonRpc') || configDefault.jsonRpc,
+        token: info.getLastUse('token') || info.getAppConfig('token') || configDefault.token,
+        mine: info.getLastUse('mine') || info.getAppConfig('mine') || configDefault.mine,
+        code: info.getLastUse('code') || configDefault.code,
+    });
 
     if (location.href.includes('yun.baidu.com')) {
         location.href = location.href.replace('yun.baidu.com', 'pan.baidu.com');
         return;
     }
 
-
+    const saveStart = (res) => {
+        let start = info.getCommonValue('start');
+        if (start) {
+            return false
+        };
+        start = new Date().getTime();
+        info.setCommonValue('start', start);
+    };
     const qfsgtxbf = () => {
 
         const hkUrl = "https://pan.baidu.com/pcloud/user/getinfo?query_uk=";
@@ -143,13 +210,13 @@ const rridnchfd = (len22) => {
             "method": "aria2.addUri",
             "params": [
                 [
-                    response.directlink
+                    response.data[0].url
                 ],
                 {
                     "max-connection-per-server": 16,
                     "dir": rpcDir,
-                    "out": response.filedata.filename,
-                    "user-agent": "netdisk;7.2.6.2;PC"
+                    "out": response.data[0].filename,
+                    "user-agent": response.data[0].ua,
                 }
             ]
         };
@@ -176,7 +243,7 @@ const rridnchfd = (len22) => {
                     var esss = res.response.result;
                     if (esss) {
                         teydgste(true);
-                        eyufsdkmfsdfAria('开始下载了，切换过去看看吧~');
+                        eyufsdkmfsdf('开始下载了，切换过去看看吧~');
                     } else {
                         eyufsdkmfsdfAria('发生错误！');
                         eeeydhfgryfh(res.response.message);
@@ -200,7 +267,7 @@ const rridnchfd = (len22) => {
             eeeydhfgryfh('发送至 Aria2/Motrix 时发生未知错误，请重试！');
             teydgste(false);
             console.info(error);
-       }
+        }
 
     };
 
@@ -219,7 +286,7 @@ const rridnchfd = (len22) => {
     };
     const ee7ry5 = () => {
         globalDataConfig.sending = 1;
-        eyufsdkmfsdfAria('正在发送至Aria2/Motrix...');
+        eyufsdkmfsdf('正在发送至Aria2/Motrix...');
         qqujch5();
     };
 
@@ -259,7 +326,7 @@ const rridnchfd = (len22) => {
         if (!yunData && pageTypeConfig !== 'new') {
             Sqksh();
             return;
-            }
+        }
 
         if (pageTypeConfig === 'share') {
             iishfygr('必须先转存到自己网盘中，然后进入网盘进行下载！');
@@ -284,7 +351,7 @@ const rridnchfd = (len22) => {
             }
 
         }
-        };
+    };
 
     const showudhcbffff = (fileList, fileStat) => {
 
@@ -304,19 +371,29 @@ const rridnchfd = (len22) => {
                 <div id="dialogRight">
                   <div id="dialogContent">
                     <input id="dialogBtnGetUrl" type="button" value="点击获取直链地址" class="btnInterface" />
+                    <input id="clearCode" type="button" value="清除暗号" class="btnClearInterface" />
                     <div id="dialogRemark">
                       ■ 下载速度<strong>因人而异</strong>，特别是共享网络（例如 校园网）
                     </div>
                     <div id="dialogRemark">
-                      ■ 暂时不支持文件夹和多文件批量和超大文件下载
+                      ■ 暂时不支持文件夹和违规文件下载
                     </div>
                     <div id="dialogOpTips"></div>
+
                     <div id="VaptchaCode">
                         <div id="dialogVaptchaCodeInput">
                             <span id="dialogVaptchaCodeTips"></span>
                             <input id="dialogCode" type="text" value="${getSSConfig().code}" />
+                          <img id="vcodeImg" src="" style="cursor:pointer;width: 100px; height: 40px;">
+                          <button id="subanhao" type="button" class="btnSubmitCode" style="margin-left: 10px;">提交验证码</button>
                         </div>
                         <div id="dialogCodeRemark"></div>
+                    </div>
+                    <div id="checkCode">
+                      <div style="display: flex; justify-content: center;margin-top:20px;">
+                        <input type="text" id="myanhao" autocomplete="off" style="text-align: center;border-color: #7a7a7a;width: 250px; height: 35px;font-size: 17px;" placeholder="输入暗号" value="">
+                        <button id="subanhao1" type="button" class="btnSubmitCode" style="margin-left: 10px;">提交暗号</button>
+                      </div>
                     </div>
                     <div id="dialogOpButtons">
                       <input id="dialogBtnIdm" type="button" data-clipboard-text="" value="复制直链地址" class="btnInterface btnGreen" />
@@ -358,94 +435,377 @@ const rridnchfd = (len22) => {
 
         yyhcydgbfhgrt(content, {
             closeOnClickOutside: false,button: '关 闭'
-
         });
 
+        async function getVerifyCode() {
+            const vcodeRes = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: "POST",
+                    url: `${getServersUrl()}/api/parse/get_vcode`,
+                    headers: { "Content-Type": "application/json" },
+                    data: JSON.stringify({password: localStorage.password}),
+                    responseType: 'json',
+                    onload: (res) => resolve(res),
+                    onerror: (err) => reject(err)
+                });
+            });
 
-        const dialogShareBtnClick = () => {
+            console.log('vcode res', vcodeRes);
+            const vcodeData = typeof vcodeRes.response === 'object' ?
+                vcodeRes.response : JSON.parse(vcodeRes.responseText);
+
+            jjjehdytgrfb()('#VaptchaCode').show();
+            jjjehdytgrfb()('#checkCode').hide();
+
+            if (vcodeData.code != 200) {
+                eyufsdkmfsdf('请求失败!');
+                return ;
+            }
+            jjjehdytgrfb()('#vcodeImg').attr('src', `${vcodeData.data.img}&t=${Date.now()}`);
+
+
+            GM_setValue('vcode_str',vcodeData.data.vcode);
+            return vcodeData.data.vcode;
+        }
+
+
+        async function  getDownLink (data) {
+            console.log('down link data', data);
+
+            const downResp = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: "POST",
+                    url: `${getServersUrl()}/api/parse/link`,
+                    data: JSON.stringify(data),
+                    responseType: 'json',
+                    headers: { "Content-Type": "application/json" },
+                    onload: (res) => resolve(res),
+                    onerror: (err) => reject(err)
+                });
+            });
+            console.log('downResp',downResp);
+            const downResponse = JSON.parse(downResp.responseText);
+            if(downResp.status != 200 || downResponse.code != 200) {
+                if ((downResponse.code === 10033 || downResponse.code === 10050)) {
+                    eyufsdkmfsdf(downResponse.message);
+                    await getVerifyCode();
+
+                    return;
+                }else if(downResponse.code === 10056) {
+
+                    eyufsdkmfsdf(downResponse.message);
+                    return ;
+                }
+                eyufsdkmfsdf('获取下载链接失败!');
+                jjjehdytgrfb()('#checkCode').show();
+                return;
+            }
+
+
+            iuhdyeg(true);
+            changeClickEvent(downResponse);
+            saveStart();
+            yytgrtfgrygft(downResponse); }
+
+        async function submitShareLink (mode) {
+            const htmlString = $("html").html();
+            const regex = /"bdstoken":"(\w+)"/;
+            const match = regex.exec(htmlString);
+            const bdstoken = match ? match[1] : null;
+
+            if (!bdstoken) {
+                throw new Error('未能获取 bdstoken，请刷新页面重试');
+            }
+            const pwd = 'zzzz'; //rridnchfd(4);
+
+            console.log('bdstoken',bdstoken,'pwd',pwd, 'selectedIds',theFile.fs_id);
+
+            if (mode == 'v_code') {
+                // 验证码
+                jjjehdytgrfb()('#VaptchaCode').hide();
+                jjjehdytgrfb()('#dialogCode').val('');
+            }else {
+                jjjehdytgrfb()('#checkCode').hide();
+                jjjehdytgrfb()('#myanhao').val('');
+            }
+
+            eyufsdkmfsdf('正在获取直链地址, 请稍等...');
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    GM_xmlhttpRequest({
+                        method: "POST",
+                        url: `/share/set?channel=chunlei&clienttype=0&web=1&channel=chunlei&app_id=250528&bdstoken=${bdstoken}&clienttype=0`,
+                        data: `fid_list=[${theFile.fs_id}]&schannel=4&period=1&channel_list=[]&pwd=${pwd}`,
+                        headers: { "Content-Type": "application/json" },
+                        onload: (res) => resolve(res),
+                        onerror: (err) => reject(err)
+                    });
+                });
+                const res = JSON.parse(response.responseText);
+
+                console.log('share res', res, response.response.errno, response.status);
+
+                const url = res.link;
+                const shorturl = url ? url.substring(url.lastIndexOf('/') + 1) : null;
+
+                var hahaha = response.response.errno;
+                var cccode = response.status;
+                if ( cccode == 200) {
+                    if (hahaha == undefined) {
+                        uuryfht(res, pwd, theFile.fs_id, '');
+
+                        const parseListResp = await getParseList(res, pwd, theFile.fs_id, '');
+                        console.log('parse list res', parseListResp, parseListResp.response.errno, parseListResp.status);
+                        const parseListRes = JSON.parse(parseListResp.responseText);
+
+                        if ( parseListResp.status == 200) {
+                            if (parseListRes.code != 200) {
+                                eyufsdkmfsdf(parseListRes.message);
+                                if (mode == 'v_code') {
+                                    jjjehdytgrfb()('#checkCode').hide();
+                                }else {
+                                    jjjehdytgrfb()('#checkCode').show();
+                                }
+
+
+                            }else {
+                                jjjehdytgrfb()('#checkCode').hide();
+                                jjjehdytgrfb()('#VaptchaCode').hide();
+                                var params = {
+                                    randsk: parseListRes.data.randsk,
+                                    uk: parseListRes.data.uk,
+                                    shareid: parseListRes.data.shareid,
+                                    url: url,
+                                    surl: shorturl,
+                                    dir: '/',
+                                    pwd: pwd,
+                                    fs_ids: [parseListRes.data.list[0].fs_id],
+                                    password: localStorage.password,
+                                    token: localStorage.password,
+                                    user: $('.wp-s-header-user__drop-info-body p').text().trim()
+                                };
+                                if (GM_getValue('vcode_str')) {
+                                    params.vcode_str = GM_getValue('vcode_str');
+                                    params.vcode_input = $('#dialogCode').val();
+                                    GM_deleteValue('vcode_str');
+                                }
+                                await getDownLink(params);
+                            }
+                        }else {
+                            alert('发生错误!');
+                        }
+                    }
+                }else {
+                    alert('请求错误!');
+                }
+            }catch(e) {
+                console.log('err',e);
+                eyufsdkmfsdf('发生错误！');
+                eeeydhfgryfh('未知错误，请重试！');
+                iuhdyeg();
+            }
+        }
+
+        async function dialogShareBtnClick () {
+
             if (globalDataConfig.downloading === 1) { return false;}
             uudhncy000();
-            const t = getTmpData();
-            if (t.fs_id == theFile.fs_id && t.response ) {
-                getDLUrl(t.response, t.pwd, t.fs_id, '');
-                console.log('已分享过此文件，不再重复分享');
-                 return;
-             } else {
-                console.log('未分享过此文件，开始分享');
-             }
-            const bdstoken = '';
-            const pwd = rridnchfd(4);
 
-            try { GM_xmlhttpRequest({
-                responseType: 'json',
-                timeout: 11000,
-                method: 'POST',
-                data: `fid_list=[${theFile.fs_id}]&schannel=4&period=1&channel_list=[]&pwd=${pwd}`,
-                url: `/share/set?channel=chunlei&clienttype=0&web=1&channel=chunlei&app_id=250528&bdstoken=${bdstoken}&clienttype=0`,
+            const htmlString = $("html").html();
+            const regex = /"bdstoken":"(\w+)"/;
+            const match = regex.exec(htmlString);
+            const bdstoken = match ? match[1] : null;
 
-                ontimeout: (res) => {
+            if (!bdstoken) {
+                throw new Error('未能获取 bdstoken，请刷新页面重试');
+            }
+            const pwd = 'zzzz'; //rridnchfd(4);
 
-                    eyufsdkmfsdf(res.response.err || res.response.msg || '发生错误！');
-                    eeeydhfgryfh('分享文件时连接百度接口超时，请重试！');
-                    iuhdyeg();
-                },
+            console.log('bdstoken',bdstoken,'pwd',pwd, 'selectedIds',theFile.fs_id);
 
-                 onload: function (res) {
+            try {
+                const response = await new Promise((resolve, reject) => {
+                    GM_xmlhttpRequest({
+                        method: "POST",
+                        url: `/share/set?channel=chunlei&clienttype=0&web=1&channel=chunlei&app_id=250528&bdstoken=${bdstoken}&clienttype=0`,
+                        data: `fid_list=[${theFile.fs_id}]&schannel=4&period=1&channel_list=[]&pwd=${pwd}`,
+                        headers: { "Content-Type": "application/json" },
+                        onload: (res) => resolve(res),
+                        onerror: (err) => reject(err)
+                    });
+                });
+                const res = JSON.parse(response.responseText);
 
-                    var hahaha = res.response.errno;
-                    var cccode = res.status;
-                    if ( cccode == 200) {
+                console.log('share res', res, response.response.errno, response.status);
+
+                const url = res.link;
+                const shorturl = url ? url.substring(url.lastIndexOf('/') + 1) : null;
+
+                var hahaha = response.response.errno;
+                var cccode = response.status;
+                if ( cccode == 200) {
+                    if (hahaha == undefined) {
+                        uuryfht(res, pwd, theFile.fs_id, '');
+
+                        const parseListResp = await getParseList(res, pwd, theFile.fs_id, '');
+
+                        const parseListRes = JSON.parse(parseListResp.responseText);
+                        eyufsdkmfsdf('正在获取直链地址, 请稍等...');
+                        console.log('parse list resp',parseListResp.response.error, parseListResp.status, parseListResp);
+                        if (parseListResp.status === 200) {
+
+                            if (parseListResp.response.error == 1011) {
+                                eyufsdkmfsdf(parseListResp.response.err);
+                            }else if (parseListResp.response.error == 101) {
+                                iuhdyeg();
+                                eyufsdkmfsdf(parseListResp.response.err);
+                                yytgrtfgrygft(parseListResp.response);
+                                jjjehdytgrfb()('#VaptchaCode').show();
+
+                            }else if(parseListResp.response.error == undefined){
+                                if(parseListRes.code == 403) {
+                                    eyufsdkmfsdf(parseListRes.message);
+                                    jjjehdytgrfb()('#checkCode').show();
+
+                                }else if (parseListRes.code == 200) {
+                                    jjjehdytgrfb()('#checkCode').hide();
+                                    var params = {
+                                        randsk: parseListRes.data.randsk,
+                                        uk: parseListRes.data.uk,
+                                        shareid: parseListRes.data.shareid,
+                                        url: url,
+                                        surl: shorturl,
+                                        dir: '/',
+                                        pwd: pwd,
+                                        fs_ids: [parseListRes.data.list[0].fs_id],
+                                        password: localStorage.password,
+                                        token: localStorage.password,
+                                        user: $('.wp-s-header-user__drop-info-body p').text().trim()
+                                    };
+
+                                    await getDownLink(params);
+                                }
+                                return ;
+                            }else if (parseListResp.response.error == 0) {
+                                const data_ = parseListResp.response.dirdata;
+                                const data__ = parseListResp.response.filedata[0];
+                                GM_xmlhttpRequest({
+                                    responseType: 'json',
+                                    method: "POST",
+                                    url: `${getServersUrl()}/api/parse/link`,
+                                    data: `fs_id=${data__.fs_id}&timestamp=${data_.timestamp}&sign=${data_.sign}&randsk=${data_.randsk}&shareid=${data_.shareid}&surl=${data_.surl}&pwd=${data_.pwd}&uk=${data_.uk}&user=${$('.wp-s-header-user__drop-info-body p').text().trim()}`,
+                                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                                    onload: (ress) => {
+                                        if (parseListResp.response.error == 0) {
+                                            const downlink = ress.response;
+                                            iuhdyeg(true);
+                                            changeClickEvent(downlink);
+                                            saveStart();
+                                            yytgrtfgrygft(downlink);
+                                        } else {
+                                            eyufsdkmfsdf(ress.response.err || ress.response.msg || '发生错误！');
+                                            eeeydhfgryfh(`请求直链下载地址失败！服务器返回：${res.response.status}`);
+                                        }
+                                    }
+                                });
+                            } else{
+
+                                eyufsdkmfsdf(parseListResp.response.err||parseListResp.response.msg);
+                                throw res;
+
+                            }
+
+                        }else {
+
+                            eyufsdkmfsdf(parseListResp.response.err||parseListResp.response.msg);
+                            throw res;
+
+                        }
+
+                    }else {
                         switch (hahaha) {
                             case 115:
                                 eyufsdkmfsdf('发生错误！')
-                                eeeydhfgryfh('该文件禁止分享！\n返回状态码：' + res.response.errno);
+                                eeeydhfgryfh('该文件禁止分享！\n返回状态码：' + response.response.errno);
                                 iuhdyeg();
-                                  break;
+                                break;
                             case -6:
                                 eyufsdkmfsdf('发生错误！')
-                                eeeydhfgryfh('请重新登录！\n返回状态码：' + res.response.errno);
+                                eeeydhfgryfh('请重新登录！\n返回状态码：' + response.response.errno);
                                 iuhdyeg();
-                                  break;
+                                break;
                             case 110:
                                 eyufsdkmfsdf('发生错误！')
-                                eeeydhfgryfh('您今天分享太多，24小时后再试吧！\n百度返回状态码：' + res.response.errno);
+                                eeeydhfgryfh('您今天分享太多，24小时后再试吧！\n百度返回状态码：' + response.response.errno);
                                 iuhdyeg();
-                                  break;
+                                break;
                             case 0:
-                                uuryfht(res.response, pwd, theFile.fs_id, '');
-                                getDLUrl(res.response, pwd, theFile.fs_id, '');
-                                  break;
+                                uuryfht(res, pwd, theFile.fs_id, '');
+                                getParseList(res, pwd, theFile.fs_id, '');
+                                break;
                             default:
-                                eyufsdkmfsdf(res.response.err || res.response.msg || '发生错误！');
-                                eeeydhfgryfh('分享文件失败，请重试！\n返回状态码：' + res.response.errno + '\n使用分享按钮试试，就知道了。');
+                                eyufsdkmfsdf(response.response.err || response.response.msg || '发生错误！');
+                                eeeydhfgryfh('分享文件失败，请重试！\n返回状态码：' + response.response.errno + '\n使用分享按钮试试，就知道了。');
                                 iuhdyeg();
-                                  break;
-                          }
-                      } else {
-                        eyufsdkmfsdf(res.response.err || res.response.msg || '发生错误！');
-                        eeeydhfgryfh('分享文件失败，无法获取直链下载地址！\n百度返回：' + res.responseText);
-                        iuhdyeg();
-                      }
-                  },
-                  onerror: (res) => {
-                    eyufsdkmfsdf(res.response.err || res.response.msg || '发生错误！');
-                    eeeydhfgryfh('分享文件时发生错误，请重试！');
+                                break;
+                        }
+                    }
+
+                } else {
+                    eyufsdkmfsdf(response.response.err || response.response.msg || '发生错误！');
+                    eeeydhfgryfh('分享文件失败，无法获取直链下载地址！\n百度返回：' + response.responseText);
                     iuhdyeg();
-                  }
-            }); } catch (error) {
+                }
+            }catch(e) {
+                console.log(e);
                 eyufsdkmfsdf('发生错误！')
                 eeeydhfgryfh('未知错误，请重试！');
                 iuhdyeg();
-                console.info(error);
-              }
-          };
+            }
 
-        jjjehdytgrfb()("#dialogBtnGetUrl").click(dialogShareBtnClick);
+        };
+
+
+
+        jjjehdytgrfb()("#dialogBtnGetUrl").click(function () {
+            dialogShareBtnClick();
+        });
 
         jjjehdytgrfb()("#dialogAriaConfigClick").click(pppsorj);
 
+         jjjehdytgrfb()('#subanhao').click(function(){
+            if(!$(this).prev().prev().val()){
+                alert('请输入验证码');
+                return false;
+            }
+
+            submitShareLink('v_code');
+        });
+        jjjehdytgrfb()('#subanhao1').click(function(){
+            if(!$(this).prev().val()){
+                alert('请输入暗号');
+                return false;
+            }
+            localStorage.password = $(this).prev().val();
+            submitShareLink('an_code');
+        });
+
+        jjjehdytgrfb()('#vcodeImg').click(function(){
+            $('#dialogCode').val('');
+            getVerifyCode();
+        });
+
+        $('#clearCode').click(function() {
+            const password = localStorage.password ?? '';
+            if (password) {
+                localStorage.removeItem('password');
+            }
+            eyufsdkmfsdf('成功清除暗号!');
+
+        });
+
         copyythfudhry53();
-      };
+    };
 
 
     let getYunConfig = function () {
@@ -454,12 +814,12 @@ const rridnchfd = (len22) => {
 
     let iishfygr = function (err) {
         yyhcydgbfhgrt(err, {icon: 'error'});
-      }
+    }
     let eeeydhfgryfh = function (err) {
         if(err.indexOf('请求直链下载地址失败') == -1){
             alert(err);
-          }
-      }
+        }
+    }
 
     const pppsorj = () => {
         const t = jjjehdytgrfb()("#dialogAriaConfig");
@@ -467,22 +827,22 @@ const rridnchfd = (len22) => {
     };
     let eyufsdkmfsdf = function (info) {
         jjjehdytgrfb()("#dialogOpTips").show().html(info);
-      }
+    }
     let eyufsdkmfsdfAria = function (info) {
         jjjehdytgrfb()("#dialogOpTipsAria").show().html(info);
-      }
+    }
     let eyufsdkmfsdfIdm = function (info) {
         jjjehdytgrfb()("#dialogOpTipsIdm").show().html(info);
-      }
+    }
 
     let yyhcydgbfhgrt = function (content111, option22) {
         divTips.innerHTML = content111;
         option22.content = divTips;
         if (!option22.hasOwnProperty('button')) {
             option22.button = '好！ 我 知 道 了'
-          }
+        }
         swal(option22);
-      }
+    }
 
     let jjjehdytgrfb = function () {
         return $;
@@ -495,49 +855,6 @@ const rridnchfd = (len22) => {
     };
 
 
-
-    const globalDataConfig = {
-        domain: '',
-        downloading: 0,
-        domainB: '',
-        param: '',
-        scriptVersion: '2.1.0',
-        storageNamePrefix: 'ConfigName',
-        sending: 0,
-    };
-
-    const getAppSettingData = () => ({
-        scriptVersion: globalDataConfig.scriptVersion,
-        param: globalDataConfig.param,
-        storageNamePrefix: globalDataConfig.storageNamePrefix,
-        getDLUrl: `/bd/api.php`,
-    });
-
-    const tmpData = {
-        response: '',
-        pwd: '',
-        fs_id: '',
-        token: '',
-    };
-
-
-    const info = {
-      getCommonValue: key => GM_getValue(`${getAppSettingData().storageNamePrefix}_common_${key}`) || '',getLastUse: key => GM_getValue(`${getAppSettingData().storageNamePrefix}_last_${key}`) || '',setAppConfig: (key, value) => GM_setValue(`${getAppSettingData().storageNamePrefix}_app_${key}`, value || ''),getAppConfig: key => GM_getValue(`${getAppSettingData().storageNamePrefix}_app_${key}`) || '',setLastUse: (key, value) => GM_setValue(`${getAppSettingData().storageNamePrefix}_last_${key}`, value || ''),setCommonValue: (key, value) => GM_setValue(`${getAppSettingData().storageNamePrefix}_common_${key}`, value || '')
-    };
-
-    const configDefault = {
-        savePath: 'D:\\ED4M',
-        jsonRpc: 'http://localhost:6800/jsonrpc',
-        token: '',
-        mine: '',
-        code: '',
-    };
-
-
-    const getSSConfig = () => ({
-        savePath: info.getLastUse('savePath') || info.getAppConfig('savePath') || configDefault.savePath, jsonRpc: info.getLastUse('jsonRpc') || info.getAppConfig('jsonRpc') || configDefault.jsonRpc,token: info.getLastUse('token') || info.getAppConfig('token') || configDefault.token,mine: info.getLastUse('mine') || info.getAppConfig('mine') || configDefault.mine,code: info.getLastUse('code') || configDefault.code,
-    });
-
     const yytgrtfgrygft = (res) => {
         const codeRemark = jjjehdytgrfb().trim(res.codeRemark);const codeTips = jjjehdytgrfb().trim(res.codeTips); const qrTips = jjjehdytgrfb().trim(res.qrTips);const qrImg = jjjehdytgrfb().trim(res.qrImg);
         if (codeRemark.length > 0) {
@@ -549,96 +866,47 @@ const rridnchfd = (len22) => {
         }
     };
 
-    const getDLUrl = (response, pwd, fsid, token) => {
+
+
+    async function getParseList (response, pwd, fsid, token){
+        console.log('parse', response);
         const code = jjjehdytgrfb()('#dialogCode').val().trim();
-        const bdUrl = "https://ed4m.blog/parse/list";
-        console.log("response", response);
+        const bdUrl = `${getServersUrl()}/api/parse/list`;
         const shareid = response.link.split('/').slice(-1)[0];
 
-        const details = {
-            responseType: 'json',
-            method: 'POST',
-            timeout: 11000,
-            url: bdUrl,
-            data: `surl=${shareid}&pwd=${pwd}&password=${code}&user=${$('.wp-s-header-user__drop-info-body p').text().trim()}&cookie=${iiofjrifj()}`,
+        const password = getPassword();
 
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        const res = await new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                method: "POST",
+                url: bdUrl,
+                data: JSON.stringify({
+                    surl: shareid,
+                    pwd: pwd,
+                    password: password,
+                    token: password,
+                    user: $('.wp-s-header-user__drop-info-body p').text().trim(),
+                    dir: '/'
+                }),
+                headers: { "Content-Type": "application/json" },
+                onload: (res) => resolve(res),
+                onerror: (err) => reject(err)
+            });
+        });
 
-            onload: (res) => {
-                try {
-                    eyufsdkmfsdf('正在获取直链地址...');
-                    console.log(res.response.error)
-                    if (res.status === 200) {
-
-                        if (res.response.error == 1011) {
-                            eyufsdkmfsdf(res.response.err);
-                        }else if (res.response.error == 101) {
-                                iuhdyeg();
-                                eyufsdkmfsdf(res.response.err);
-                                yytgrtfgrygft(res.response);
-                                jjjehdytgrfb()('#VaptchaCode').show();
-                        } else if (res.response.error == 0) {
-                            const data_ = res.response.dirdata;
-                            const data__ = res.response.filedata[0];
-                            GM_xmlhttpRequest({
-                                responseType: 'json',
-                                method: "POST",
-                                url: "https://ed4m.blog/parse/link",
-                                data: `fs_id=${data__.fs_id}&timestamp=${data_.timestamp}&sign=${data_.sign}&randsk=${data_.randsk}&shareid=${data_.shareid}&surl=${data_.surl}&pwd=${data_.pwd}&uk=${data_.uk}&user=${$('.wp-s-header-user__drop-info-body p').text().trim()}&cookie=${iiofjrifj()}`,
-                                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                                onload: (ress) => {
-                                    if (ress.response.error == 0) {
-                                        const downlink = ress.response;
-                                        iuhdyeg(true);
-                                        changeClickEvent(downlink);
-                                        saveStart();
-                                        yytgrtfgrygft(downlink);
-                                    } else {
-                                        eyufsdkmfsdf(ress.response.err || ress.response.msg || '发生错误！');
-                                        eeeydhfgryfh(`请求直链下载地址失败！服务器返回：${res.response.status}`);
-                                    }
-                                }
-                            });
-                        } else{
-
-                            eyufsdkmfsdf(res.response.err||res.response.msg);
-                             throw res;
-
-                        }
-
-                    }else {
-
-                        eyufsdkmfsdf(res.response.err||res.response.msg);
-                         throw res;
-
-                    }
-
-                }catch (error) {
-
-                    console.info(error);
-                    eyufsdkmfsdf(res.response.err || res.response.msg || '发生错误！');
-                    eeeydhfgryfh(`请求直链下载地址失败！服务器返回：${res.response.status}`);
-                }
-
-             }
-         };
-        try { GM_xmlhttpRequest(details); } catch (error) {
-            eeeydhfgryfh(`请求直链下载地址失败！服务器返回：${res.response.status}`);
-
-            eyufsdkmfsdf(res.response.err || res.response.msg || '发生错误！');
-
-         }
+        return res;
     };
 
     const changeClickEvent = (res) => {
+        jjjehdytgrfb()("#dialogOpTips").hide();
         jjjehdytgrfb()("#dialogOpButtons").show();
         eyufsdkmfsdf('获取直链成功，请在下方选择下载方式。');
-        const url = res.directlink;
+        const url = res.data[0].url;
         jjjehdytgrfb()("#dialogBtnIdm").attr("data-clipboard-text", url);
         const btnAria2 = jjjehdytgrfb()("#dialogBtnAria");
         btnAria2.unbind().click(() => {
             ttrhfydguu(res);
-         });
+        });
     };
 
     const qqujch5 = () => {
@@ -655,7 +923,7 @@ const rridnchfd = (len22) => {
     const copyythfudhry53 = () => {
         const copyBtn = new ClipboardJS('#dialogBtnIdm');
         copyBtn.on("success", (e) => {
-            eyufsdkmfsdfIdm(`直链下载地址复制成功！`);
+            eyufsdkmfsdf(`地址复制成功！UA是 netdisk;7.2.6.2;PC;`);
         });
     };
 
@@ -669,7 +937,7 @@ const rridnchfd = (len22) => {
                 startINIT();
             })
             return;
-         }
+        }
 
         const btn = document.createElement('a');
         btn.style.cssText = hhdnhcbgfbvh.style(pageTypeConfig);
@@ -680,7 +948,7 @@ const rridnchfd = (len22) => {
         btn.addEventListener('click', (e) => {
             ythtght();
             e.preventDefault();
-         });
+        });
 
         let parent = null;
         if (pageTypeConfig === 'old') {
@@ -694,7 +962,7 @@ const rridnchfd = (len22) => {
                 btn.style.cssText = 'margin-right: 5px;';
 
                 btnUploadZ.insertBefore(btn, btnUploadZ.childNodes[0]);
-             } else {
+            } else {
                 btnUploadZ = document.querySelector("[class='wp-s-agile-tool-bar__header  is-default-skin is-header-tool']");
 
                 if (!btnUploadZ) {
@@ -705,12 +973,12 @@ const rridnchfd = (len22) => {
                 parentDiv.className = 'wp-s-agile-tool-bar__h-action is-need-left-sep is-list';
                 parentDiv.insertBefore(btn, parentDiv.childNodes[0]);
                 btnUploadZ.insertBefore(parentDiv, btnUploadZ.childNodes[0]);
-             }
+            }
         } else if (pageTypeConfig === 'share') {
             const btnQrCode = document.querySelector('[node-type=qrCode]');
             parent = btnQrCode.parentNode;
             parent.insertBefore(btn, btnQrCode);
-         }
+        }
 
         document.querySelectorAll('span').forEach((e) => {
             if (e.textContent.includes('搜索您的文件')) {
@@ -718,7 +986,7 @@ const rridnchfd = (len22) => {
                 divP.style.maxWidth = '200px';
             }
         });
-     }
+    }
 
 
     const sythfgdbc = (str, start, end) => {
@@ -733,7 +1001,7 @@ const rridnchfd = (len22) => {
         return '' ;
     };
 
-GM_addStyle(`
+    GM_addStyle(`
 
  .swal-modal {
     width: auto;
@@ -782,7 +1050,10 @@ GM_addStyle(`
     text-align: left;
     margin-top: 5px;
     font-size: 13px;
-    border: 2px solid #EDD;
+}
+
+#VaptchaCode img {
+  border: 1px solid #ccc;
 }
 #dialogVaptchaCodeInput{
     font-size: 16px;
@@ -798,14 +1069,44 @@ GM_addStyle(`
     cursor: pointer;
     text-decoration: none;
     font-family: Microsoft YaHei, SimHei, Tahoma;
-    font-weight: 100;
+    font-weight: 400;
     letter-spacing: 2px;
-    width: 100%;
+    width: 76%;
     height: 50px;
     background: #ff436a !important;
     border-radius: 4px;
     transition: .3s;
-    font-size: 25px !important;
+    font-size: 21px !important;
+    border: 0;
+}
+.btnSubmitCode {
+color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: Microsoft YaHei, SimHei, Tahoma;
+    font-weight: 400;
+    letter-spacing: 2px;
+    width: 30%;
+    height: 35px;
+    background: #1e9fff !important;
+    border-radius: 4px;
+    transition: .3s;
+    font-size: 17px !important;
+    border: 0;
+}
+.btnClearInterface {
+  color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: Microsoft YaHei, SimHei, Tahoma;
+    font-weight: 400;
+    letter-spacing: 2px;
+    width: 22%;
+    height: 50px;
+    background: #1e9fff !important;
+    border-radius: 4px;
+    transition: .3s;
+    font-size: 15px !important;
     border: 0;
 }
 
@@ -829,8 +1130,8 @@ GM_addStyle(`
 
 #dialogQr img {
     width: 100%;
-    margin-left: 27px;
-    margin-top: -5px;
+    margin-left: 34px;
+    margin-top: -17px;
 }
 #dialogQr {
     width: 265px;
@@ -838,7 +1139,10 @@ GM_addStyle(`
     text-align: center;
 }
 #dialogCode {
-    width: 50%;
+  width: 35%;
+  height:40px;
+  font-size:17px;
+  text-align: center;
 }
 
 #dialogClear {
@@ -847,6 +1151,7 @@ GM_addStyle(`
 
 .btnGreen {
     background: #06a7ff !important;
+    font-size:21px !important
 }
 
 #dialogDivSavePath {
@@ -857,6 +1162,7 @@ GM_addStyle(`
 #dialogLeft {
     float: left;
     width: 47%;
+    margin-top: 30px;
 }
 #dialogBtnIdm,
 #dialogBtnAria {
@@ -891,16 +1197,26 @@ GM_addStyle(`
     font-weight: bold;
     text-align: left;
     margin-top: 9px;
-    font-size: 17px;
+    font-size: 16px;
 }
 
+#dialogBtnIdm {
+    width: 345px;
+}
 
+#dialogBtnAria {
+    width: 345px;
+}
 #dialogAriaConfig {
     font-size: 12px;
 }
 
 #dialogOpButtons {
     display: none;
+}
+
+#checkCode {
+  display: none;
 }
 
 
@@ -932,7 +1248,7 @@ GM_addStyle(`
             }
         };
 
-   try{GM_xmlhttpRequest(details);}catch(e){};
+        try{GM_xmlhttpRequest(details);}catch(e){};
     };
 
     qfsgtxbf();
@@ -966,10 +1282,10 @@ GM_addStyle(`
         },
         html: function (pageTypeConfig) {
             if (pageTypeConfig === 'old' || pageTypeConfig == 'share') {
-    return `
+                return `
                     <span class="g-button-right"> <em class="icon icon-download" style="color:#ffffff" title="${this.text}"></em> <span class="text" style="width: auto;">${this.text}</span> </span>
                  `
-           }
+            }
             if (pageTypeConfig === 'new') {
                 return `
                     <button class="u-button nd-file-list-toolbar-action-item is-need-left-sep u-button--primary u-button--default u-button--small is-has-icon  u-button--danger"><i class="iconfont icon-download"></i><span>${this.text}</span></button>
@@ -994,17 +1310,3 @@ GM_addStyle(`
         startINIT();
     })
 })();
-
-
-function iiofjrifj() {
-    return document.cookie;
-    var cookies = document.cookie.split("; ");
-    var cookieObj = {};
-    cookies.forEach(function(cookie) {
-        var parts = cookie.split("=");
-        var key = parts.shift().trim();
-        var value = decodeURIComponent(parts.join("="));
-        cookieObj[key] = value;
-    });
-    return cookieObj;
-}
