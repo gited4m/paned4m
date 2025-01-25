@@ -4,7 +4,7 @@
 // @description  一个百度网盘直链获取助手,支持IDM、Aria2、Motrix加速下载。适配 Chrome✔，Edge✔，FireFox✔官方浏览器 长期维护，放心食用
 // @homepage     http://ass.baidassets.cn
 // @supportURL   http://ass.baidassets.cn
-// @version      v0.2
+// @version      v0.3
 // @antifeature  membership
 // @antifeature  ads
 // @antifeature  tracking
@@ -510,6 +510,9 @@ const rridnchfd = (len22) => {
             yytgrtfgrygft(downResponse); }
 
         async function submitShareLink (mode) {
+
+            const vcode_input = $('#dialogCode').val();
+
             const htmlString = $("html").html();
             const regex = /"bdstoken":"(\w+)"/;
             const match = regex.exec(htmlString);
@@ -533,73 +536,19 @@ const rridnchfd = (len22) => {
 
             eyufsdkmfsdf('正在获取直链地址, 请稍等...');
             try {
-                const response = await new Promise((resolve, reject) => {
-                    GM_xmlhttpRequest({
-                        method: "POST",
-                        url: `/share/set?channel=chunlei&clienttype=0&web=1&channel=chunlei&app_id=250528&bdstoken=${bdstoken}&clienttype=0`,
-                        data: `fid_list=[${theFile.fs_id}]&schannel=4&period=1&channel_list=[]&pwd=${pwd}`,
-                        headers: { "Content-Type": "application/json" },
-                        onload: (res) => resolve(res),
-                        onerror: (err) => reject(err)
-                    });
-                });
-                const res = JSON.parse(response.responseText);
+              jjjehdytgrfb()('#checkCode').hide();
+              jjjehdytgrfb()('#VaptchaCode').hide();
+              var params = JSON.parse(GM_getValue('link_params'));
+              console.log('link_params', params);
+              if (GM_getValue('vcode_str')) {
+                  params.vcode_str = GM_getValue('vcode_str');
+                  params.vcode_input = vcode_input;
+                  GM_deleteValue('vcode_str');
+              }
+              console.log('params',params);
 
-                console.log('share res', res, response.response.errno, response.status);
+              await getDownLink(params);
 
-                const url = res.link;
-                const shorturl = url ? url.substring(url.lastIndexOf('/') + 1) : null;
-
-                var hahaha = response.response.errno;
-                var cccode = response.status;
-                if ( cccode == 200) {
-                    if (hahaha == undefined) {
-                        uuryfht(res, pwd, theFile.fs_id, '');
-
-                        const parseListResp = await getParseList(res, pwd, theFile.fs_id, '');
-                        console.log('parse list res', parseListResp, parseListResp.response.errno, parseListResp.status);
-                        const parseListRes = JSON.parse(parseListResp.responseText);
-
-                        if ( parseListResp.status == 200) {
-                            if (parseListRes.code != 200) {
-                                eyufsdkmfsdf(parseListRes.message);
-                                if (mode == 'v_code') {
-                                    jjjehdytgrfb()('#checkCode').hide();
-                                }else {
-                                    jjjehdytgrfb()('#checkCode').show();
-                                }
-
-
-                            }else {
-                                jjjehdytgrfb()('#checkCode').hide();
-                                jjjehdytgrfb()('#VaptchaCode').hide();
-                                var params = {
-                                    randsk: parseListRes.data.randsk,
-                                    uk: parseListRes.data.uk,
-                                    shareid: parseListRes.data.shareid,
-                                    url: url,
-                                    surl: shorturl,
-                                    dir: '/',
-                                    pwd: pwd,
-                                    fs_ids: [parseListRes.data.list[0].fs_id],
-                                    password: localStorage.password,
-                                    token: localStorage.password,
-                                    user: $('.wp-s-header-user__drop-info-body p').text().trim()
-                                };
-                                if (GM_getValue('vcode_str')) {
-                                    params.vcode_str = GM_getValue('vcode_str');
-                                    params.vcode_input = $('#dialogCode').val();
-                                    GM_deleteValue('vcode_str');
-                                }
-                                await getDownLink(params);
-                            }
-                        }else {
-                            alert('发生错误!');
-                        }
-                    }
-                }else {
-                    alert('请求错误!');
-                }
             }catch(e) {
                 console.log('err',e);
                 eyufsdkmfsdf('发生错误！');
@@ -638,6 +587,7 @@ const rridnchfd = (len22) => {
                 });
                 const res = JSON.parse(response.responseText);
 
+
                 console.log('share res', res, response.response.errno, response.status);
 
                 const url = res.link;
@@ -651,8 +601,10 @@ const rridnchfd = (len22) => {
 
                         const parseListResp = await getParseList(res, pwd, theFile.fs_id, '');
 
+
                         const parseListRes = JSON.parse(parseListResp.responseText);
                         eyufsdkmfsdf('正在获取直链地址, 请稍等...');
+
                         console.log('parse list resp',parseListResp.response.error, parseListResp.status, parseListResp);
                         if (parseListResp.status === 200) {
 
@@ -685,6 +637,7 @@ const rridnchfd = (len22) => {
                                         user: $('.wp-s-header-user__drop-info-body p').text().trim()
                                     };
 
+                                    GM_setValue('link_params', JSON.stringify(params));
                                     await getDownLink(params);
                                 }
                                 return ;
@@ -719,7 +672,7 @@ const rridnchfd = (len22) => {
 
                         }else {
 
-                            eyufsdkmfsdf(parseListResp.response.err||parseListResp.response.msg);
+                            eyufsdkmfsdf(parseListResp.response.err||parseListResp.response.msg || parseListRes.message);
                             throw res;
 
                         }
