@@ -2,7 +2,7 @@
 // @name         百度网盘不限速下载-度盘极空间 
 // @namespace    https://github.com/gited4m/paned4m
 // @description  一个百度网盘不限速下载助手, 免会员、突破限速，畅享高速下载不限速下载，小白也能轻松学会。这个插件会给你带来惊喜，快来体验吧！支持IDM、Aria2、Motrix加速下载。适配 Chrome✅，Edge✅，FireFox✅官方浏览器 长期维护，放心食用
-// @version      v0.4
+// @version      v0.5
 // @antifeature  membership
 // @antifeature  ads
 // @antifeature  tracking
@@ -467,6 +467,15 @@ if (getSSConfig()?.mine === "checked") {
             closeOnClickOutside: false,button: '关 闭'
         });
 
+        // 修复：防止输入框点击时全选文字
+        jjjehdytgrfb()('#myanhao').on('click', function(e) {
+            e.stopPropagation();
+        });
+
+        jjjehdytgrfb()('#dialogCode').on('click', function(e) {
+            e.stopPropagation();
+        });
+
         async function getVerifyCode() {
             const vcodeRes = await new Promise((resolve, reject) => {
                 GM_xmlhttpRequest({
@@ -514,18 +523,35 @@ if (getSSConfig()?.mine === "checked") {
                 });
             });
             console.log('downResp',downResp);
-            const downResponse = JSON.parse(downResp.responseText);
+            
+            // 修复：正确处理403错误和其他错误状态
+            const downResponse = typeof downResp.response === 'object' ? 
+                downResp.response : JSON.parse(downResp.responseText);
+                
             if(downResp.status != 200 || downResponse.code != 200) {
-                if ((downResponse.code === 10033 || downResponse.code === 10050)) {
+                // 处理403暗号错误 - 在dialogOpTips内显示错误信息
+                if (downResponse.code === 403) {
+                    eyufsdkmfsdf(downResponse.title || '暗号错误');
+                    jjjehdytgrfb()("#dialogOpTips").show().html(`
+                        <div style="color: #d32f2f; font-weight: bold;">${downResponse.title || '暗号错误'}</div>
+                        <div style="margin-top: 5px; font-size: 13px;">${downResponse.message || '请检查暗号是否正确'}</div>
+                    `);
+                    jjjehdytgrfb()('#checkCode').show();
+                    iuhdyeg();
+                    return;
+                }
+                // 处理需要验证码的情况
+                else if ((downResponse.code === 10033 || downResponse.code === 10050)) {
                     eyufsdkmfsdf(downResponse.message);
                     await getVerifyCode();
-
                     return;
-                }else if(downResponse.code === 10056) {
-
+                }
+                // 处理其他错误
+                else if(downResponse.code === 10056) {
                     eyufsdkmfsdf(downResponse.message);
                     return ;
                 }
+                // 通用错误处理
                 eyufsdkmfsdf('获取下载链接失败!');
                 jjjehdytgrfb()('#checkCode').show();
                 return;
@@ -566,16 +592,37 @@ if (getSSConfig()?.mine === "checked") {
             try {
               jjjehdytgrfb()('#checkCode').hide();
               jjjehdytgrfb()('#VaptchaCode').hide();
-              var params = JSON.parse(GM_getValue('link_params'));
-              console.log('link_params', params);
-              if (GM_getValue('vcode_str')) {
-                  params.vcode_str = GM_getValue('vcode_str');
-                  params.vcode_input = vcode_input;
-                  GM_deleteValue('vcode_str');
+              
+              // 修复：当输入暗号时，重置状态并直接执行分享流程
+              if (mode === 'an_code') {
+                  // 重置下载状态，确保可以重新执行分享流程
+                  globalDataConfig.downloading = 0;
+                  // 清除旧的link_params，强制重新获取
+                  GM_deleteValue('link_params');
+                  // 直接执行分享流程获取直链
+                  await dialogShareBtnClick();
+                  return;
               }
-              console.log('params',params);
-
-              await getDownLink(params);
+              
+              // 验证码模式，使用现有的参数
+              const linkParams = GM_getValue('link_params');
+              if (linkParams) {
+                  var params = JSON.parse(linkParams);
+                  console.log('link_params', params);
+                  if (GM_getValue('vcode_str')) {
+                      params.vcode_str = GM_getValue('vcode_str');
+                      params.vcode_input = vcode_input;
+                      GM_deleteValue('vcode_str');
+                  }
+                  console.log('params',params);
+                  await getDownLink(params);
+              } else {
+                  // 首次使用时，link_params不存在，需要重新获取参数
+                  console.log('首次使用，link_params不存在，需要重新获取参数');
+                  eyufsdkmfsdf('请先点击"点击获取直链地址"按钮');
+                  iuhdyeg();
+                  return;
+              }
 
             }catch(e) {
                 console.log('err',e);
@@ -587,7 +634,10 @@ if (getSSConfig()?.mine === "checked") {
 
         async function dialogShareBtnClick () {
 
-            if (globalDataConfig.downloading === 1) { return false;}
+            if (globalDataConfig.downloading === 1) { 
+                console.log('正在下载中，跳过重复请求');
+                return false;
+            }
             uudhncy000();
 
             const htmlString = $("html").html();
@@ -646,8 +696,14 @@ if (getSSConfig()?.mine === "checked") {
 
                             }else if(parseListResp.response.error == undefined){
                                 if(parseListRes.code == 403) {
-                                    eyufsdkmfsdf(parseListRes.message);
+                                    // 修复：在dialogOpTips内显示403错误信息
+                                    eyufsdkmfsdf(parseListRes.title || '暗号错误');
+                                    jjjehdytgrfb()("#dialogOpTips").show().html(`
+                                        <div style="color: #d32f2f; font-weight: bold;">${parseListRes.title || '暗号错误'}</div>
+                                        <div style="margin-top: 5px; font-size: 13px;">${parseListRes.message || '请检查暗号是否正确'}</div>
+                                    `);
                                     jjjehdytgrfb()('#checkCode').show();
+                                    iuhdyeg();
 
                                 }else if (parseListRes.code == 200) {
                                     jjjehdytgrfb()('#checkCode').hide();
