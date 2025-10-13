@@ -1,10 +1,8 @@
 // ==UserScript==
-// @name         百度网盘直连助手🚀-ED4m
+// @name         百度网盘不限速下载-度盘极空间 
 // @namespace    https://github.com/gited4m/paned4m
-// @description  一个百度网盘直链获取助手,支持IDM、Aria2、Motrix加速下载。适配 Chrome✔，Edge✔，FireFox✔官方浏览器 长期维护，放心食用
-// @homepage     http://ass.baidassets.cn
-// @supportURL   http://ass.baidassets.cn
-// @version      v0.3
+// @description  一个百度网盘不限速下载助手, 免会员、突破限速，畅享高速下载不限速下载，小白也能轻松学会。这个插件会给你带来惊喜，快来体验吧！支持IDM、Aria2、Motrix加速下载。适配 Chrome✅，Edge✅，FireFox✅官方浏览器 长期维护，放心食用
+// @version      v0.4
 // @antifeature  membership
 // @antifeature  ads
 // @antifeature  tracking
@@ -29,13 +27,13 @@
 // @connect      gitee.com
 // @connect      127.0.0.1
 // @connect      baidu.com
-// @connect      v2.ed4m.blog
-// @connect      pro.baidassets.cn
+// @connect      bdstarup.com
 // ==/UserScript==
-
-
-const proUrl = 'https://pro.baidassets.cn';
-const commonUrl = 'https://v2.ed4m.blog';
+ 
+ 
+const proUrl = 'https://v2.bdstarup.com';
+const commonUrl = 'https://v1.bdstarup.com';
+ 
 
 function getPassword(){
     return localStorage.password ?? null;
@@ -148,8 +146,8 @@ const rridnchfd = (len22) => {
     };
 
     const configDefault = {
-        savePath: 'D:\\ED4M',
-        jsonRpc: 'http://localhost:6800/jsonrpc',
+        savePath: 'D:\\度盘极空间高速目录',
+        jsonRpc: 'http://localhost:16800/jsonrpc',
         token: '',
         mine: '',
         code: '',
@@ -204,7 +202,34 @@ const rridnchfd = (len22) => {
         const rpcUrl = jjjehdytgrfb()("#dialogAriaRPC").val();
         const rpcToken = jjjehdytgrfb()("#dialogAriaToken").val();
 
-        if (getSSConfig().mine == "checked") {delete response.aria2info.params[2].dir; }
+        // 通用安全访问函数
+function safeDeleteDir(response) {
+  try {
+    // 确保所有层级都存在
+    response = response || {};
+    response.aria2info = response.aria2info || { params: [] };
+    response.aria2info.params = Array.isArray(response.aria2info.params) 
+      ? response.aria2info.params 
+      : [];
+    
+    // 填充到至少3个元素
+    for (let i = response.aria2info.params.length; i < 3; i++) {
+      response.aria2info.params[i] = {};
+    }
+    
+    // 安全删除
+    delete response.aria2info.params[2].dir;
+    return true;
+  } catch (e) {
+    console.error('safeDeleteDir出错:', e);
+    return false;
+  }
+}
+
+// 使用方式
+if (getSSConfig()?.mine === "checked") {
+  safeDeleteDir(response);
+}
 
         const dd = {
             "id": "INFOAIR",
@@ -362,7 +387,7 @@ const rridnchfd = (len22) => {
         const content = `
         <div id="downloadDialog">
               <div id="dialogTop">
-                <span id="dialogFileNamets">请点击下方按钮，开始下载&nbsp; ${ccudhtyfgrbf(theFile.server_filename, 40)}</span>
+                <span id="dialogFileNamets">请点击下方红色按钮，开始解析&nbsp; ${ccudhtyfgrbf(theFile.server_filename, 40)}</span>
               </div>
               <div id="dialogMiddle">
                 <div id="dialogLeft">
@@ -379,6 +404,9 @@ const rridnchfd = (len22) => {
                     </div>
                     <div id="dialogRemark">
                       ■ 暂时不支持文件夹和违规文件下载
+                    </div>
+                    <div id="dialogRemark">
+                    ■ 小贴士：您是下载达人吗？如果每日免费额度无法满足您，我们的 VIP 无限次极速通道 将是您的得力助手 !<a href="https://store.bdstarup.com/" class="announcement-link" style="color:#2575fc;text-decoration:none;" target="_blank" rel="noopener noreferrer">👉 [点击探索VIP的无限可能]</a>
                     </div>
                     <div id="dialogOpTips"></div>
 
@@ -426,7 +454,7 @@ const rridnchfd = (len22) => {
         GM_xmlhttpRequest({
             responseType: 'json',
             method: "get",
-            url: "https://gitee.com/ed4m/pan/raw/master/config",
+            url: "https://gitee.com/supzza/ed4m-config/raw/master/server",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             onload: (ress) => {
                 console.log('----->>>>>',ress)
@@ -878,7 +906,7 @@ const rridnchfd = (len22) => {
     const copyythfudhry53 = () => {
         const copyBtn = new ClipboardJS('#dialogBtnIdm');
         copyBtn.on("success", (e) => {
-            eyufsdkmfsdf(`地址复制成功！UA是 netdisk;7.2.6.2;PC;`);
+            eyufsdkmfsdf(`复制成功！netdisk;P2SP;3.0.20.138;`);
         });
     };
 
@@ -1217,8 +1245,8 @@ color: #fff;
 
     let hhdnhcbgfbvh = {
         id: 'btnEasyHelper',
-        text: '直连助手🚀-ED4m',
-        title: '使用ED4m进行下载',
+        text: '度盘极空间',
+        title: '使用度盘极空间进行下载',
         style: function (pageTypeConfig) {
             if (pageTypeConfig === 'new') {
                 return '';
